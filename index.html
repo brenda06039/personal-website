@@ -39,6 +39,43 @@
             text-decoration: none;
         }
 
+        /* ==================== 【最新修改 1】彻底打入最底层的 Fixed 光晕（物理穿透） ==================== */
+        .glow-wrapper {
+            position: fixed; /* 采用 fixed 全局锁定 */
+            width: 420px;
+            height: 320px;
+            left: 38%; /* 整体向左置偏 */
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1.15); /* 初始主页状态放大 1.15 倍 */
+            filter: blur(75px);
+            opacity: 1.0; 
+            transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: -1; /* 物理层级设为 -1，绝对处于最底层，无法阻挡任何鼠标点击 */
+            pointer-events: none;
+        }
+
+        .glow-large {
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background-color: var(--color-large);
+            top: 10px;
+            left: 20px;
+            transition: background-color 1s ease;
+        }
+
+        .glow-small {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background-color: var(--color-small);
+            top: 130px;
+            left: 220px;
+            transition: background-color 1s ease;
+        }
+
         /* ==================== 3. 全局固定框架布局 ==================== */
 
         /* 顶部栏 */
@@ -240,43 +277,6 @@
             align-items: center;
         }
 
-        /* A. 双色交融渐变光晕容器（Metaball） */
-        .glow-wrapper {
-            position: absolute;
-            width: 420px;
-            height: 320px;
-            left: 38%; /* 整体向左置偏 */
-            top: 50%;
-            transform: translate(-50%, -50%) scale(1.15); /* 初始主页状态自动放大 1.15 倍 */
-            filter: blur(75px);
-            opacity: 1.0; 
-            transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .glow-large {
-            position: absolute;
-            width: 240px;
-            height: 240px;
-            border-radius: 50%;
-            background-color: var(--color-large);
-            top: 10px;
-            left: 20px;
-            transition: background-color 1s ease;
-        }
-
-        .glow-small {
-            position: absolute;
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background-color: var(--color-small);
-            top: 130px;
-            left: 220px;
-            transition: background-color 1s ease;
-        }
-
         /* B. 面板切换容器 */
         .content-container {
             width: 100%;
@@ -286,6 +286,7 @@
             z-index: 2;
         }
 
+        /* ==================== 【最新修改 3】面板基础物理可见性安全锁（防残留遮挡） ==================== */
         .page-panel {
             position: absolute;
             width: 100%;
@@ -295,10 +296,12 @@
             justify-content: center;
             opacity: 0;
             pointer-events: none;
+            visibility: hidden; /* 未激活页面完全物理隐藏，绝不阻挡指针 */
             transform: translateY(10px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
+            transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s ease;
         }
         .page-panel.active {
+            visibility: visible; /* 激活时再转为可见 */
             opacity: 1;
             pointer-events: auto;
             transform: translateY(0);
@@ -442,7 +445,12 @@
             padding-right: 15px;
             flex-shrink: 0;
         }
+
+        /* ==================== 【最新修改 2】职业经历：Flex 两端对齐，为小箭头的滑出提供空间 ==================== */
         .company-tab {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 公司名在左，小箭头在右 */
             font-weight: 600;
             font-size: 0.85rem;
             cursor: pointer;
@@ -458,11 +466,26 @@
         .company-tab.active {
             color: var(--text-color);
         }
+        /* 动态滑出的小箭头（Syne/Sans 通用） */
+        .company-tab .tab-arrow {
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .company-tab.active .tab-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* 选中状态的左侧微小圆点定位点 */
         .company-tab.active::before {
             content: '';
             position: absolute;
             left: -12px;
-            top: 7px;
+            top: 50%;
+            transform: translateY(-50%);
             width: 4px;
             height: 4px;
             background-color: var(--text-color);
@@ -481,23 +504,26 @@
         .exp-details-viewport::-webkit-scrollbar {
             display: none; 
         }
+
+        /* 经历详情面板的过渡机制 */
         .exp-detail-panel {
             position: absolute;
             width: 100%;
             top: 0;
             opacity: 0;
             pointer-events: none;
+            visibility: hidden; 
             transform: translateY(8px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-            display: none;
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
         }
         .exp-detail-panel.active {
-            display: block;
+            visibility: visible;
             opacity: 1;
             pointer-events: auto;
             transform: translateY(0);
             position: relative;
         }
+
         .exp-detail-header {
             display: flex;
             justify-content: space-between;
@@ -611,7 +637,7 @@
         }
         .gallery-img {
             width: 100%;
-            aspect-ratio: 1 / 1; /* 裁切为完美正方形 */ [1]
+            aspect-ratio: 1 / 1; /* 裁切为完美正方形 */
             object-fit: cover; /* 保证不同比例的照片剪裁进去均不拉伸变形 */
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -789,6 +815,7 @@
             .center-viewport {
                 position: static;
                 padding: 40px 20px;
+                display: block; /* 移动端采用标准文档流 */
             }
             .page-panel {
                 position: static;
@@ -796,6 +823,7 @@
                 pointer-events: auto;
                 transform: none;
                 margin-bottom: 60px;
+                height: auto;
             }
             .glow-wrapper {
                 display: none;
@@ -840,10 +868,31 @@
                 padding-bottom: 20px;
                 padding-right: 0;
             }
+            .exp-interactive-container {
+                flex-direction: column;
+                height: auto;
+                gap: 20px;
+            }
+            .exp-companies-menu {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px dotted rgba(0, 0, 0, 0.15);
+                padding-bottom: 15px;
+                padding-right: 0;
+            }
+            .company-tab.active::before {
+                left: -8px;
+            }
         }
     </style>
 </head>
 <body>
+
+    <!-- 背景渐变双光晕（大、小两颗球，移至 body 最底层，物理上永不阻挡点击，z-index:-1） -->
+    <div class="glow-wrapper" id="glow-bg">
+        <div class="glow-large"></div>
+        <div class="glow-small"></div>
+    </div>
 
     <!-- 1. 顶部栏 -->
     <div class="top-bar">
@@ -871,7 +920,7 @@
         
         <div class="control-area">
             <!-- 矢量返回图标（←） -->
-            <button class="back-btn" id="back-btn" onclick="navigateTo('hero')" title="返回主页">
+            <button class="back-btn" id="back-btn" title="返回主页">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
@@ -891,22 +940,16 @@
     <!-- 3. 右侧栏 -->
     <div class="right-sidebar">
         <div class="nav-links-wrapper">
-            <div class="nav-item active" onclick="navigateTo('hero')">HOME</div>
-            <div class="nav-item" onclick="navigateTo('about')">关于我</div>
-            <div class="nav-item" onclick="navigateTo('experience')">职业经历</div>
-            <div class="nav-item" onclick="portfolioRedirect()">高光项目</div>
-            <div class="nav-item" onclick="navigateTo('contact')">联系我</div>
+            <div class="nav-item active" data-target="hero">HOME</div>
+            <div class="nav-item" data-target="about">关于我</div>
+            <div class="nav-item" data-target="experience">职业经历</div>
+            <div class="nav-item" data-target="portfolio">高光项目</div>
+            <div class="nav-item" data-target="contact">联系我</div>
         </div>
     </div>
 
     <!-- 4. 中央切换核心视口 -->
     <div class="center-viewport">
-        <!-- 背景渐变双光晕（大、小两颗球，左侧偏置 38%） -->
-        <div class="glow-wrapper" id="glow-bg">
-            <div class="glow-large"></div>
-            <div class="glow-small"></div>
-        </div>
-
         <!-- 内容区域容器 -->
         <div class="content-container">
 
@@ -1022,12 +1065,15 @@
                 <div class="subpage-content">
                     <h2 class="subpage-title">职业经历</h2>
                     <div class="exp-interactive-container">
+                        <!-- ==================== 【最新修改 2】添加语义化的 data-index 属性 ==================== -->
                         <div class="exp-companies-menu">
-                            <div class="company-tab active" onclick="switchCompany(0)">
+                            <div class="company-tab active" data-index="0">
                                 成都英曼吉科技文化有限公司
+                                <span class="tab-arrow">→</span> <!-- 动态滑出小箭头 -->
                             </div>
-                            <div class="company-tab" onclick="switchCompany(1)">
+                            <div class="company-tab" data-index="1">
                                 电子科大科园股份有限公司
+                                <span class="tab-arrow">→</span> <!-- 动态滑出小箭头 -->
                             </div>
                         </div>
 
@@ -1114,27 +1160,29 @@
                         <!-- 幻灯片过渡包裹层 -->
                         <div class="projects-slider-wrapper">
                             
-                            <!-- 项目 1 （专业学科赛事指导及政府文旅合作落地项目） -->
+                            <!-- 项目 1 -->
                             <div class="project-slide active" id="project-slide-0">
                                 <!-- 左侧：3-12张自适应网格 -->
                                 <div class="portfolio-left">
                                     <div class="project-gallery">
-                                        <img src="images/project1-1.jpg" alt="项目实拍01" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-2.jpg" alt="项目实拍02" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-3.jpg" alt="项目实拍03" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-4.jpg" alt="项目实拍04" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-5.jpg" alt="项目实拍05" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-6.jpg" alt="项目实拍06" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-7.jpg" alt="项目实拍07" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-8.jpg" alt="项目实拍08" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-9.jpg" alt="项目实拍09" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project1-10.jpg" alt="项目实拍10" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-1.jpg" alt="01" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-2.jpg" alt="02" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-3.jpg" alt="03" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-4.jpg" alt="04" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-5.jpg" alt="05" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-6.jpg" alt="06" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-7.jpg" alt="07" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-8.jpg" alt="08" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-9.jpg" alt="09" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-10.jpg" alt="10" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-11.jpg" alt="11" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project1-12.jpg" alt="12" class="gallery-img" onerror="this.style.display='none'">
                                     </div>
                                 </div>
                                 <!-- 右侧：白字信息介绍区 -->
                                 <div class="portfolio-right">
                                     <span class="project-year">2025 - 2026</span>
-                                    <h3 class="project-title-text">专业学科赛事指导及政府文旅合作落地项目</h3>
+                                    <h3 class="project-title-text">赛事指导及政府文旅合作项目</h3>
                                     <div class="project-skills-list">
                                         <span>交互设计流程统筹</span>
                                         <span>招投标文书编制</span>
@@ -1146,19 +1194,27 @@
                                 </div>
                             </div>
 
-                            <!-- 项目 2 （多元场景艺术跨界合作项目） -->
+                            <!-- 项目 2 -->
                             <div class="project-slide" id="project-slide-1">
                                 <div class="portfolio-left">
                                     <div class="project-gallery">
-                                        <img src="images/project2-1.jpg" alt="跨界合作实拍01" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project2-2.jpg" alt="跨界合作实拍02" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project2-3.jpg" alt="跨界合作实拍03" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project2-4.jpg" alt="跨界合作实拍04" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project2-1.jpg" alt="01" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-2.jpg" alt="02" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-3.jpg" alt="03" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-4.jpg" alt="04" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-5.jpg" alt="05" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-6.jpg" alt="06" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-7.jpg" alt="07" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-8.jpg" alt="08" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-9.jpg" alt="09" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-10.jpg" alt="10" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-11.jpg" alt="11" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project2-12.jpg" alt="12" class="gallery-img" onerror="this.style.display='none'">
                                     </div>
                                 </div>
                                 <div class="portfolio-right">
                                     <span class="project-year">2023 - 2025</span>
-                                    <h3 class="project-title-text">多元场景艺术跨界合作项目（文轩 / 市集 / 露营 / 社区）</h3>
+                                    <h3 class="project-title-text">多场景艺术合作项目（文轩/市集/露营/社区等）</h3>
                                     <div class="project-skills-list">
                                         <span>跨界资源整合</span>
                                         <span>活动策划</span>
@@ -1171,13 +1227,22 @@
                                 </div>
                             </div>
 
-                            <!-- 项目 3 （艺术留学知识库与案例中心） -->
+                            <!-- 项目 3 -->
                             <div class="project-slide" id="project-slide-2">
                                 <div class="portfolio-left">
                                     <div class="project-gallery">
-                                        <img src="images/project3-1.jpg" alt="案例中心01" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project3-2.jpg" alt="案例中心02" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project3-3.jpg" alt="案例中心03" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project3-1.jpg" alt="01" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-2.jpg" alt="02" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-3.jpg" alt="03" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-4.jpg" alt="04" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-5.jpg" alt="05" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-6.jpg" alt="06" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-7.jpg" alt="07" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-8.jpg" alt="08" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-9.jpg" alt="09" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-10.jpg" alt="10" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-11.jpg" alt="11" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project3-12.jpg" alt="12" class="gallery-img" onerror="this.style.display='none'">
                                     </div>
                                 </div>
                                 <div class="portfolio-right">
@@ -1195,18 +1260,27 @@
                                 </div>
                             </div>
 
-                            <!-- 项目 4 （新媒体多平台内容矩阵运营与转化） -->
+                            <!-- 项目 4 -->
                             <div class="project-slide" id="project-slide-3">
                                 <div class="portfolio-left">
                                     <div class="project-gallery">
-                                        <img src="images/project4-1.jpg" alt="矩阵运营01" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project4-2.jpg" alt="矩阵运营02" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project4-3.jpg" alt="矩阵运营03" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project4-1.jpg" alt="01" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-2.jpg" alt="02" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-3.jpg" alt="03" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-4.jpg" alt="04" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-5.jpg" alt="05" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-6.jpg" alt="06" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-7.jpg" alt="07" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-8.jpg" alt="08" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-9.jpg" alt="09" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-10.jpg" alt="10" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-11.jpg" alt="11" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project4-12.jpg" alt="12" class="gallery-img" onerror="this.style.display='none'">
                                     </div>
                                 </div>
                                 <div class="portfolio-right">
                                     <span class="project-year">2021 - 2024</span>
-                                    <h3 class="project-title-text">新媒体多平台内容矩阵运营与转化</h3>
+                                    <h3 class="project-title-text">内容传播与品牌运营项目</h3>
                                     <div class="project-skills-list">
                                         <span>小红书账号运营</span>
                                         <span>短视频剪辑</span>
@@ -1218,18 +1292,27 @@
                                 </div>
                             </div>
 
-                            <!-- 项目 5 （晶融汇高端商业空间艺术跨界系列活动） -->
+                            <!-- 项目 5 -->
                             <div class="project-slide" id="project-slide-4">
                                 <div class="portfolio-left">
                                     <div class="project-gallery">
-                                        <img src="images/project5-1.jpg" alt="商业跨界01" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project5-2.jpg" alt="商业跨界02" class="gallery-img" onclick="openLightbox(this.src)">
-                                        <img src="images/project5-3.jpg" alt="商业跨界03" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project5-1.jpg" alt="01" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-2.jpg" alt="02" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-3.jpg" alt="03" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-4.jpg" alt="04" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-5.jpg" alt="05" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-6.jpg" alt="06" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-7.jpg" alt="07" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-8.jpg" alt="08" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-9.jpg" alt="09" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-10.jpg" alt="10" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-11.jpg" alt="11" class="gallery-img" onerror="this.style.display='none'">
+                                        <img src="images/project5-12.jpg" alt="12" class="gallery-img" onerror="this.style.display='none'">
                                     </div>
                                 </div>
                                 <div class="portfolio-right">
                                     <span class="project-year">2018</span>
-                                    <h3 class="project-title-text">晶融汇高端商业空间艺术跨界系列活动</h3>
+                                    <h3 class="project-title-text">晶融汇艺术跨界合作项目</h3>
                                     <div class="project-skills-list">
                                         <span>跨机构资源协调</span>
                                         <span>活动统筹</span>
@@ -1246,11 +1329,11 @@
 
                         <!-- 右侧垂直白色小球指示器（Pagination） -->
                         <div class="portfolio-pagination">
-                            <span class="pagination-dot active" onclick="switchProject(0)"></span>
-                            <span class="pagination-dot" onclick="switchProject(1)"></span>
-                            <span class="pagination-dot" onclick="switchProject(2)"></span>
-                            <span class="pagination-dot" onclick="switchProject(3)"></span>
-                            <span class="pagination-dot" onclick="switchProject(4)"></span>
+                            <span class="pagination-dot active" data-index="0"></span>
+                            <span class="pagination-dot" data-index="1"></span>
+                            <span class="pagination-dot" data-index="2"></span>
+                            <span class="pagination-dot" data-index="3"></span>
+                            <span class="pagination-dot" data-index="4"></span>
                         </div>
 
                     </div> <!-- /portfolio-card -->
@@ -1378,7 +1461,7 @@
             navigateTo('portfolio');
         }
 
-        // 公司经历卡片切换
+        // ==================== 公司经历卡片切换 ====================
         function switchCompany(index) {
             const tabs = document.querySelectorAll('.company-tab');
             tabs.forEach((tab, i) => {
@@ -1392,8 +1475,11 @@
             const panels = document.querySelectorAll('.exp-detail-panel');
             panels.forEach((panel, i) => {
                 if (i === index) {
-                    panel.classList.add('active');
-                    document.querySelector('.exp-details-viewport').scrollTop = 0;
+                    panel.classList.add('active'); 
+                    const viewport = document.querySelector('.exp-details-viewport');
+                    if (viewport) {
+                        viewport.scrollTop = 0;
+                    }
                 } else {
                     panel.classList.remove('active');
                 }
@@ -1438,6 +1524,45 @@
             const modal = document.getElementById('lightbox-modal');
             modal.classList.remove('show');    
         }
+
+        // ==================== 事件监听器动态绑定逻辑 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 绑定主菜单导航点击事件
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const target = item.getAttribute('data-target');
+                    if (target === 'portfolio') {
+                        portfolioRedirect();
+                    } else {
+                        navigateTo(target);
+                    }
+                });
+            });
+
+            // 2. 绑定左下角纯箭头返回键点击事件
+            const backBtn = document.getElementById('back-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    navigateTo('hero');
+                });
+            }
+
+            // 3. 绑定经历选项卡点击事件
+            document.querySelectorAll('.company-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const index = parseInt(tab.getAttribute('data-index'), 10);
+                    switchCompany(index);
+                });
+            });
+
+            // 4. 绑定高光项目翻页小球点击事件
+            document.querySelectorAll('.pagination-dot').forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const index = parseInt(dot.getAttribute('data-index'), 10);
+                    switchProject(index);
+                });
+            });
+        });
     </script>
 </body>
 </html>
