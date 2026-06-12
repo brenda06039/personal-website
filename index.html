@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brenda's Personal Website</title>
+    <style>
+        /* ==================== 1. 动态引入 Poppins (ExtraBold) 与 Syne 艺术字体 ==================== */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&family=Syne:wght@400;600;800&display=swap');
+
+        /* ==================== 2. 核心视觉与配色定义 ==================== */
+        :root {
+            --bg-color: #fffdf3;         /* 奶油白背景 */
+            --text-color: #000000;       /* 纯黑文字与线条 */
+            --border-style: 1px dotted rgba(0, 0, 0, 0.25); /* 极细点状虚线 */
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            
+            --color-large: #ffb3ba;
+            --color-small: #ffdfba;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-sans);
+            height: 100vh;
+            overflow: hidden; /* 锁定视口防止物理滚动 */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ==================== 3. 全局固定框架布局 ==================== */
+
+        /* 顶部栏 */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 42px; /* 与左侧极窄分割线对齐 */
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            /* 左边预留 100px 的呼吸空间，右边预留 40px 的黑点边距 */
+            padding: 0 40px 0 100px; 
+            z-index: 10;
+        }
+        .top-bar-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 20px;
+        }
+        .clock {
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+        .top-divider-line {
+            flex-grow: 1;
+            border-bottom: var(--border-style);
+        }
+        .top-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .top-dots .dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--text-color);
+            border-radius: 50%;
+        }
+
+        /* 左侧栏（极窄设计 42px） */
+        .left-sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 60px;
+            width: 42px; /* 极窄边栏 */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            border-right: var(--border-style);
+            padding: 20px 0;
+            z-index: 10;
+        }
+        .brand-name {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 控制区：返回键与刷新键垂直整齐排布 */
+        .control-area {
+            position: relative;
+            width: 30px;
+            height: 72px; /* 容纳两个 30px 按钮及其中间 12px 间距 */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 确保底部的刷新键位置永远保持静止 */
+            align-items: center;
+        }
+        
+        /* 纯箭头返回按钮与刷新按钮的统一基础样式 */
+        .back-btn, .refresh-btn {
+            background: none;
+            border: 1px solid var(--text-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px); /* 轻微位移动效 */
+        }
+        .back-btn.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* 统一的 SVG 图标对齐样式 */
+        .back-btn svg, .refresh-btn svg {
+            display: block;
+            transition: stroke 0.3s ease;
+        }
+
+        /* 鼠标悬停反色效果 */
+        .back-btn:hover, .refresh-btn:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+        
+        .perf-indicator {
+            position: absolute;
+            left: 38px;
+            bottom: 5px;
+            white-space: nowrap;
+            background: var(--text-color);
+            color: var(--bg-color);
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            font-family: monospace;
+            z-index: 5;
+        }
+        .perf-indicator.show {
+            opacity: 1;
+        }
+
+        /* 右侧栏 */
+        .right-sidebar {
+            position: fixed;
+            right: 0;
+            top: 60px;
+            bottom: 60px;
+            width: 110px;
+            z-index: 10;
+        }
+        .nav-links-wrapper {
+            position: absolute;
+            bottom: 20px;
+            right: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 12px;
+            border-right: var(--border-style);
+            padding-right: 15px;
+        }
+        .nav-item {
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            padding-right: 10px;
+            transition: opacity 0.3s ease;
+            white-space: nowrap; /* 强制文字不换行，保持在单排显示 */
+        }
+        .nav-item:hover, .nav-item.active {
+            font-weight: bold;
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background-color: var(--text-color);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .nav-item.active::after {
+            opacity: 1;
+        }
+
+        /* ==================== 4. 中央内容视口 ==================== */
+        .center-viewport {
+            position: absolute;
+            top: 60px;
+            bottom: 60px;
+            left: 42px; /* 适配左侧极窄边栏 */
+            right: 110px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* A. 双色交融渐变光晕容器（Metaball） */
+        .glow-wrapper {
+            position: absolute;
+            width: 420px;
+            height: 320px;
+            left: 38%; /* 整体向左置偏 */
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1.15); /* 初始主页状态自动放大 1.15 倍 */
+            filter: blur(75px);
+            opacity: 1.0; 
+            transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .glow-large {
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background-color: var(--color-large);
+            top: 10px;
+            left: 20px;
+            transition: background-color 1s ease;
+        }
+
+        .glow-small {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background-color: var(--color-small);
+            top: 130px;
+            left: 220px;
+            transition: background-color 1s ease;
+        }
+
+        /* B. 面板切换容器 */
+        .content-container {
+            width: 100%;
+            max-width: 920px;   
+            height: 90%;        
+            position: relative;
+            z-index: 2;
+        }
+
+        .page-panel {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .page-panel.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* ==================== 5. 各子页面通用排版 ==================== */
+        .subpage-content {
+            height: 100%;
+            overflow: auto;
+            padding-right: 10px;
+        }
+        .subpage-content::-webkit-scrollbar {
+            display: none;
+        }
+        .subpage-content {
+            scrollbar-width: none;
+        }
+
+        .subpage-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        /* 关于我双列非对称排版容器 */
+        .about-grid-container {
+            display: flex;
+            gap: 40px;
+            height: calc(100% - 60px);
+            align-items: stretch;
+        }
+
+        /* 左侧列：基础背景与硬实力标签 */
+        .about-left-col {
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px; /* 紧凑呼吸感 */
+            border-right: 1px dotted rgba(0, 0, 0, 0.15);
+            padding-right: 25px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .about-left-col::-webkit-scrollbar {
+            display: none;
+        }
+
+        .about-section h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-color);
+            letter-spacing: 0.05em;
+        }
+        .edu-school {
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: block;
+            color: var(--text-color);
+        }
+        .edu-major {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.5);
+            display: block;
+            margin-top: 4px;
+        }
+        /* 醒目的边框框 badges */
+        .about-skills-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .skill-badge {
+            font-size: 0.75rem;
+            border: 1px solid var(--text-color); /* 极细黑色实线边框 */
+            border-radius: 4px;
+            padding: 4px 10px;
+            white-space: nowrap;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .skill-badge:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* 右侧列：职业定位与自身特质（双语分块呈现） */
+        .about-right-col {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-left: 10px;
+            padding-right: 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .about-right-col::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .bi-zh-block {
+            font-size: 0.85rem;
+            font-weight: 300;
+            line-height: 1.8;
+            color: rgba(0, 0, 0, 0.8);
+        }
+        .bi-zh-block p {
+            margin-bottom: 16px;
+        }
+        .bi-divider {
+            margin: 24px 0;
+            border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+        }
+        
+        .bi-en-block {
+            font-family: 'Syne', sans-serif; /* 统一更换为艺术个性的 Syne 字体 */
+            font-size: 0.8rem;
+            font-weight: 400;
+            line-height: 1.7;
+            color: rgba(0, 0, 0, 0.5); /* 优雅深灰小字 */
+            letter-spacing: 0.01em;
+        }
+        .bi-en-block p {
+            margin-bottom: 16px;
+        }
+
+        /* 职业经历选项卡排版 */
+        .exp-interactive-container {
+            display: flex;
+            gap: 30px;
+            height: calc(100% - 60px);
+            align-items: stretch;
+        }
+        .exp-companies-menu {
+            width: 220px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border-right: 1px dotted rgba(0, 0, 0, 0.15);
+            padding-right: 15px;
+            flex-shrink: 0;
+        }
+        .company-tab {
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: rgba(0, 0, 0, 0.35);
+            line-height: 1.5;
+            transition: all 0.3s ease;
+            position: relative;
+            white-space: nowrap; 
+        }
+        .company-tab:hover {
+            color: rgba(0, 0, 0, 0.75);
+        }
+        .company-tab.active {
+            color: var(--text-color);
+        }
+        .company-tab.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 7px;
+            width: 4px;
+            height: 4px;
+            background-color: var(--text-color);
+            border-radius: 50%;
+        }
+
+        .exp-details-viewport {
+            flex-grow: 1;
+            position: relative;
+            overflow-y: auto;
+            padding-left: 10px;
+            padding-right: 30px; 
+            scrollbar-width: none;            
+            -ms-overflow-style: none;         
+        }
+        .exp-details-viewport::-webkit-scrollbar {
+            display: none; 
+        }
+        .exp-detail-panel {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            display: none;
+        }
+        .exp-detail-panel.active {
+            display: block;
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+            position: relative;
+        }
+        .exp-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 20px;
+            border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+            padding-bottom: 10px;
+        }
+        .exp-detail-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+        .exp-detail-date {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.5);
+            font-family: monospace;
+        }
+        .exp-section {
+            margin-bottom: 24px;
+        }
+        .exp-section h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+        .exp-section ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .exp-section ul li {
+            position: relative;
+            padding-left: 14px;
+            font-size: 0.85rem;
+            font-weight: 300;
+            line-height: 1.6;
+            margin-bottom: 6px;
+            color: rgba(0, 0, 0, 0.75);
+        }
+        .exp-section ul li::before {
+            content: '•';
+            position: absolute;
+            left: 2px;
+            color: rgba(0, 0, 0, 0.4);
+        }
+        .exp-section ul li strong {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        /* Bento 黑色卡片排版 */
+        .portfolio-card {
+            background-color: #0b0b0d; /* 暗黑色圆角盒子 */
+            border: 1px solid rgba(255, 255, 255, 0.08); /* 极细微光描边 */
+            border-radius: 20px;
+            height: calc(100% - 40px); /* 留有一点底边距 */
+            display: flex;
+            position: relative;
+            padding: 30px;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        /* 幻灯片容器包 */
+        .projects-slider-wrapper {
+            flex-grow: 1;
+            position: relative;
+            height: 100%;
+        }
+
+        /* 独立单张幻灯片（左图右文布局，方案A淡入淡出过渡） */
+        .project-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            gap: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease; /* 方案A：淡入淡出 */
+        }
+        .project-slide.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* A. 左侧：3-12张图片自适应网格（Square Grid） */
+        .portfolio-left {
+            width: 48%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        .project-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 统一3列，完美呼应3x3拼图秩序感 */
+            gap: 8px;
+            width: 100%;
+            max-height: 100%;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        /* 隐藏网格内部滚动条 */
+        .project-gallery::-webkit-scrollbar {
+            display: none;
+        }
+        .project-gallery {
+            scrollbar-width: none;
+        }
+        .gallery-img {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* 裁切为完美正方形 */ [1]
+            object-fit: cover; /* 保证不同比例的照片剪裁进去均不拉伸变形 */
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+            cursor: zoom-in; /* 提示可点击放大 */
+        }
+        .gallery-img:hover {
+            transform: scale(1.04);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* B. 右侧：白字信息介绍区 */
+        .portfolio-right {
+            width: 46%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: #ffffff; /* 强对比极白文字 */
+            text-align: left;
+        }
+        .project-year {
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .project-title-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #ffffff;
+            margin-bottom: 14px;
+        }
+        /* 技术栈小气泡 */
+        .project-skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+        .project-skills-list span {
+            font-size: 0.7rem;
+            background-color: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            white-space: nowrap;
+        }
+        .project-description-text {
+            font-size: 0.8rem;
+            font-weight: 300;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.65); /* 软化辅助文字，保证层级 */
+        }
+
+        /* C. 最右侧：半透明白色小球指示器（Pagination Dots） */
+        .portfolio-pagination {
+            width: 6%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            border-left: 1px dotted rgba(255, 255, 255, 0.1);
+            padding-left: 10px;
+            z-index: 5;
+        }
+        .pagination-dot {
+            width: 6px;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.25); /* 未选中时呈半透明白 */
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .pagination-dot:hover {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        .pagination-dot.active {
+            background-color: #ffffff; /* 当前激活状态纯白 */
+            transform: scale(1.3);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); /* 散发呼吸感微光 */
+        }
+
+        /* 原生极简 Lightbox 灯箱放大模态框 */
+        #lightbox-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.92); /* 高对比黑色磨砂底色 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 9999; /* 保证绝对覆盖最上层 */
+        }
+        #lightbox-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #lightbox-img {
+            max-width: 90%;
+            max-height: 85%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        #lightbox-modal.show #lightbox-img {
+            transform: scale(1); /* 柔和放大动效 */
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 2.2rem;
+            cursor: pointer;
+            font-weight: 300;
+            transition: color 0.2s ease;
+            user-select: none;
+        }
+        .lightbox-close:hover {
+            color: #ffffff;
+        }
+
+        /* 主页特定高光 Poppins ExtraBold 样式 */
+        .hero-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* 大小字对齐左边界 */
+            text-align: left;        /* 文字左对齐 */
+            padding-left: 28%;       /* 【偏右设计】将整个文字板块优雅推向右侧 */
+            width: 100%;
+        }
+        .hero-center-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800; /* ExtraBold */
+            font-size: 3.2rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em; /* 适合 Poppins 的现代字距 */
+            color: var(--text-color);
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+        .hero-bio {
+            font-size: 0.9rem; /* 字体随大字放大 */
+            letter-spacing: 0.08em; /* 留白感 */
+            font-weight: 300;
+            color: rgba(0, 0, 0, 0.65); /* 柔和深灰色 */
+            white-space: nowrap; /* 强制约束不折行 */
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 40px; /* 中英文与描述之间的水平呼吸空格加宽至 40px */
+            margin-top: 24px; 
+        }
+
+        /* 移动端自适应 */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
+            .left-sidebar, .right-sidebar, .top-bar {
+                display: none;
+            }
+            .center-viewport {
+                position: static;
+                padding: 40px 20px;
+            }
+            .page-panel {
+                position: static;
+                opacity: 1;
+                pointer-events: auto;
+                transform: none;
+                margin-bottom: 60px;
+            }
+            .glow-wrapper {
+                display: none;
+            }
+            .portfolio-card {
+                flex-direction: column;
+                height: auto;
+                padding: 20px;
+            }
+            .project-slide {
+                flex-direction: column;
+                position: static;
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .portfolio-left, .portfolio-right {
+                width: 100%;
+            }
+            .portfolio-pagination {
+                display: none; 
+            }
+            .hero-panel {
+                padding-left: 0;
+                align-items: center;
+                text-align: center;
+            }
+            .hero-bio {
+                white-space: normal; 
+                flex-direction: column;
+                gap: 8px;
+                align-items: center;
+            }
+            .about-grid-container {
+                flex-direction: column;
+                height: auto;
+                gap: 30px;
+            }
+            .about-left-col {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px dotted rgba(0, 0, 0, 0.15);
+                padding-bottom: 20px;
+                padding-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 顶部栏 -->
+    <div class="top-bar">
+        <div class="top-bar-content">
+            <div class="clock">
+                <span id="clock-time">00:00:00</span> / 
+                <span id="clock-day">FRIDAY</span> / 
+                <span id="clock-date">05.06.2026</span>
+            </div>
+            <div class="top-divider-line"></div>
+            <div class="top-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 左侧栏 -->
+    <div class="left-sidebar">
+        <div class="brand-name">
+            <span class="en">BRENDA'S PERSONAL WEBSITE</span>
+        </div>
+        
+        <div class="control-area">
+            <!-- 矢量返回图标（←） -->
+            <button class="back-btn" id="back-btn" onclick="navigateTo('hero')" title="返回主页">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <!-- 矢量刷新图标（↻） -->
+            <button class="refresh-btn" id="refresh-btn" title="变换光晕并体检">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+            </button>
+            <div class="perf-indicator" id="perf-indicator">FPS: 60 | Latency: 12ms | Stable</div>
+        </div>
+    </div>
+
+    <!-- 3. 右侧栏 -->
+    <div class="right-sidebar">
+        <div class="nav-links-wrapper">
+            <div class="nav-item active" onclick="navigateTo('hero')">HOME</div>
+            <div class="nav-item" onclick="navigateTo('about')">关于我</div>
+            <div class="nav-item" onclick="navigateTo('experience')">职业经历</div>
+            <div class="nav-item" onclick="portfolioRedirect()">高光项目</div>
+            <div class="nav-item" onclick="navigateTo('contact')">联系我</div>
+        </div>
+    </div>
+
+    <!-- 4. 中央切换核心视口 -->
+    <div class="center-viewport">
+        <!-- 背景渐变双光晕（大、小两颗球，左侧偏置 38%） -->
+        <div class="glow-wrapper" id="glow-bg">
+            <div class="glow-large"></div>
+            <div class="glow-small"></div>
+        </div>
+
+        <!-- 内容区域容器 -->
+        <div class="content-container">
+
+            <!-- [首页 Panel] -->
+            <div class="page-panel active" id="panel-hero">
+                <div class="hero-panel">
+                    <!-- 主页特定高亮 Poppins ExtraBold 3.2rem 大字 -->
+                    <h1 class="hero-center-title">HI, IT'S ME BRENDA</h1>
+                    
+                    <!-- 平铺副标题，伴随大字偏右，间距拉大 -->
+                    <p class="hero-bio">
+                        <span>刘禺芮 | 履历 & 作品集站点</span>
+                        <span>既然点进来了，不妨花几分钟了解一下我～</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- [关于我 Panel] -->
+            <div class="page-panel" id="panel-about">
+                <div class="subpage-content">
+                    <h2 class="subpage-title">关于我</h2>
+                    
+                    <!-- 关于我：双列非对称排版容器 -->
+                    <div class="about-grid-container">
+                        
+                        <!-- 左侧：教育背景与技能工具 -->
+                        <div class="about-left-col">
+                            <!-- 教育背景 -->
+                            <div class="about-section">
+                                <h4>教育背景</h4>
+                                <div class="edu-item">
+                                    <span class="edu-school">四川师范学院</span>
+                                    <span class="edu-major">汉语言文学</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 资质证书 -->
+                            <div class="about-section">
+                                <h4>资质证书</h4>
+                                <div class="about-skills-badges">
+                                    <span class="skill-badge">人力资源管理师 (三级)</span>
+                                    <span class="skill-badge">初级会计师证</span>
+                                    <span class="skill-badge">社会工作者职业资格 (初级)</span>
+                                    <span class="skill-badge">国家二级运动员</span>
+                                    <span class="skill-badge">计算机一级证书</span>
+                                </div>
+                            </div>
+
+                            <!-- 软件工具 -->
+                            <div class="about-section">
+                                <h4>软件工具</h4>
+                                <div class="about-skills-badges">
+                                    <span class="skill-badge">Microsoft Excel</span>
+                                    <span class="skill-badge">Adobe Photoshop</span>
+                                    <span class="skill-badge">Adobe InDesign</span>
+                                    <span class="skill-badge">秀米编辑器</span>
+                                    <span class="skill-badge">Final Cut Pro</span>
+                                    <span class="skill-badge">可画</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧：职业定位与自身特质（双语分块呈现） -->
+                        <div class="about-right-col">
+                            
+                            <!-- 1. 中文完整叙述段落 -->
+                            <div class="bi-zh-block">
+                                <p>
+                                    这些年，我一直在和“不会”打交道。 从企业培训到艺术教育，从项目管理到品牌运营，从对接政府、企业、高校，到自学PS、排版、视频剪辑 and 新媒体运营，我的大部分技能都来自同一句话——“要不先试试？”
+                                </p>
+                                <p>
+                                    事实证明，很多事情并没有想象中那么难。人最有趣的地方在于，你永远不知道自己下一项技能会在哪里被点亮。
+                                </p>
+                                <p>
+                                    所以我喜欢变化，也习惯学习。每一次跨界、每一个新项目，都像打开一个新的盲盒。有人追求稳定，我更享受成长带来的惊喜。
+                                </p>
+                                <p>
+                                    直到今天，我依然相信学习是件很划算的事。它不一定让人立刻变厉害，却能让人面对变化时没那么慌张。毕竟人生最大的确定性，大概就是它一直在变化。
+                                </p>
+                            </div>
+
+                            <!-- 极细点状分割线 -->
+                            <div class="bi-divider"></div>
+
+                            <!-- 2. 英文完整辅助段落（Syne 字体，不穿插） -->
+                            <div class="bi-en-block">
+                                <p>
+                                    Over the years, I’ve been constantly dealing with “I don’t know how” moments.
+                                </p>
+                                <p>
+                                    From corporate training to art education, from project management to brand operations, from collaborating with governments, businesses, and universities, to teaching myself Photoshop, layout, video editing, and social media, most of my skills grew out of one simple sentence: “Why not just give it a try?”
+                                </p>
+                                <p>
+                                    It turns out that many things aren’t as difficult as they seem. The most interesting thing about people is that you never know where your next skill will be sparked.
+                                </p>
+                                <p>
+                                    That’s why I enjoy change and have made learning a habit. Every cross-industry leap, every new project, feels like opening a mystery box. While some people chase stability, I relish the surprises that growth brings.
+                                </p>
+                                <p>
+                                    Even today, I still believe learning is worth it. It may not make you instantly brilliant, but it makes facing change a lot less frightening. After all, the only certainty in life is that it keeps changing.
+                                </p>
+                            </div>
+
+                        </div> <!-- /about-right-col -->
+
+                    </div> <!-- /about-grid-container -->
+                    
+                </div>
+            </div>
+
+            <!-- [职业经历 Panel] -->
+            <div class="page-panel" id="panel-experience">
+                <div class="subpage-content">
+                    <h2 class="subpage-title">职业经历</h2>
+                    <div class="exp-interactive-container">
+                        <div class="exp-companies-menu">
+                            <div class="company-tab active" onclick="switchCompany(0)">
+                                成都英曼吉科技文化有限公司
+                            </div>
+                            <div class="company-tab" onclick="switchCompany(1)">
+                                电子科大科园股份有限公司
+                            </div>
+                        </div>
+
+                        <div class="exp-details-viewport">
+                            <!-- 公司经历一 -->
+                            <div class="exp-detail-panel active" id="exp-detail-0">
+                                <div class="exp-detail-header">
+                                    <span class="exp-detail-title">综合运营</span>
+                                    <span class="exp-detail-date">2018.01 - 2026.06</span>
+                                </div>
+                                <div class="exp-detail-body">
+                                    <div class="exp-section">
+                                        <h5>1、业务标准化与流程管理 (2018-2024)：</h5>
+                                        <ul>
+                                            <li><strong>知识库建设：</strong>梳理并建立艺术留学核心专业数据库，涵盖全球艺术院校申请节点、材料清单及就业方向。</li>
+                                            <li><strong>SOP 制定：</strong>制定针对不同国家、专业的申请时间轴及标准化文案处理流程。</li>
+                                            <li><strong>全流程执行：</strong>独立负责研究生申请全过程（选校、文书监控、递交、签证、行前指导），累计协助 100+ 名学生获得院校录取。</li>
+                                        </ul>
+                                    </div>
+                                    <div class="exp-section">
+                                        <h5>2、渠道开发与品牌合作 (2019-2026)：</h5>
+                                        <ul>
+                                            <li><strong>高校对接：</strong>联动伦敦艺术大学（UAL）名师，在四川大学、四川师范大学等高校组织专业宣讲及 Workshop。</li>
+                                            <li><strong>异业合作：</strong>与方所、新华文轩、丸露营、麓湖岛集、地瓜社区等文化地标合作策划艺术沙龙、独立营地、亲子课程等活动。</li>
+                                            <li><strong>政企合作：</strong>通过招投标承接金牛区文体旅局互动灯光装置项目；为新华文轩政企部策划执行 400-500 人规模的大型艺术手工活动。</li>
+                                        </ul>
+                                    </div>
+                                    <div class="exp-section">
+                                        <h5>3、品牌运营与新媒体探索 (2018-2026)：</h5>
+                                        <ul>
+                                            <li><strong>新媒体孵化：</strong>建立并运营“iart”手工账号，3个月内积累 2000+ 粉丝，并实现手工物料包的商业转化。</li>
+                                            <li><strong>活动统筹：</strong>负责品融汇 UAL 成都招生办联合服装走秀、唐卡艺术品牌推广活动，处理多方协调及物料准备。</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 公司经历二 -->
+                            <div class="exp-detail-panel" id="exp-detail-1">
+                                <div class="exp-detail-header">
+                                    <span class="exp-detail-title">企业培训负责人</span>
+                                    <span class="exp-detail-date">2014.06 - 2017.12</span>
+                                </div>
+                                <div class="exp-detail-body">
+                                    <div class="exp-section">
+                                        <h5>1、培训项目运营：</h5>
+                                        <ul>
+                                            <li><strong>项目交付：</strong>对接电信行业、电力行业、制造行业客户需求，制定实施方案，及场地配套，确保项目按期交付。</li>
+                                        </ul>
+                                    </div>
+                                    <div class="exp-section">
+                                        <h5>2、培训体系完善：</h5>
+                                        <ul>
+                                            <li><strong>数据化存档：</strong>通过设置培训节点反馈表，实现培训过程数据化存档。负责Excel共享文档维护培训数据库，沉淀课件及案例资源。</li>
+                                        </ul>
+                                    </div>
+                                    <div class="exp-section">
+                                        <h5>3、招投标业务支持：</h5>
+                                        <ul>
+                                            <li><strong>投标支持：</strong>参与政企培训项目招投标，负责方案编写与商务材料整理。任职期间参与6个项目投标，协助团队达成 80% 的投标成功率。</li>
+                                        </ul>
+                                    </div>
+                                    <div class="exp-section">
+                                        <h5>4、客户沟通维护：</h5>
+                                        <ul>
+                                            <li><strong>沟通衔接：</strong>围绕项目执行开展需求确认、过程反馈及结果沟通，保障项目推进及后续合作衔接。</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [高光项目 Panel] -->
+            <div class="page-panel" id="panel-portfolio">
+                <div class="subpage-content">
+                    <h2 class="subpage-title">高光项目</h2>
+                    
+                    <!-- 黑色卡片盒子 -->
+                    <div class="portfolio-card">
+                        
+                        <!-- 幻灯片过渡包裹层 -->
+                        <div class="projects-slider-wrapper">
+                            
+                            <!-- 项目 1 （专业学科赛事指导及政府文旅合作落地项目） -->
+                            <div class="project-slide active" id="project-slide-0">
+                                <!-- 左侧：3-12张自适应网格 -->
+                                <div class="portfolio-left">
+                                    <div class="project-gallery">
+                                        <img src="images/project1-1.jpg" alt="项目实拍01" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-2.jpg" alt="项目实拍02" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-3.jpg" alt="项目实拍03" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-4.jpg" alt="项目实拍04" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-5.jpg" alt="项目实拍05" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-6.jpg" alt="项目实拍06" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-7.jpg" alt="项目实拍07" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-8.jpg" alt="项目实拍08" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-9.jpg" alt="项目实拍09" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project1-10.jpg" alt="项目实拍10" class="gallery-img" onclick="openLightbox(this.src)">
+                                    </div>
+                                </div>
+                                <!-- 右侧：白字信息介绍区 -->
+                                <div class="portfolio-right">
+                                    <span class="project-year">2025 - 2026</span>
+                                    <h3 class="project-title-text">专业学科赛事指导及政府文旅合作落地项目</h3>
+                                    <div class="project-skills-list">
+                                        <span>交互设计流程统筹</span>
+                                        <span>招投标文书编制</span>
+                                        <span>政企项目对接</span>
+                                    </div>
+                                    <p class="project-description-text">
+                                        协调四川大学交互设计专业与柴火团队开展 Seed 交互大赛合作。负责项目整体流程统筹、校方需求对接及学生参赛进度管控。对接成都市金牛区文旅局，独立编制互动灯光装置项目投标文件，并全程跟进项目落地、现场施工督导、设备调试及验收工作，完成政企项目从投标到交付的实操全过程。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 项目 2 （多元场景艺术跨界合作项目） -->
+                            <div class="project-slide" id="project-slide-1">
+                                <div class="portfolio-left">
+                                    <div class="project-gallery">
+                                        <img src="images/project2-1.jpg" alt="跨界合作实拍01" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project2-2.jpg" alt="跨界合作实拍02" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project2-3.jpg" alt="跨界合作实拍03" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project2-4.jpg" alt="跨界合作实拍04" class="gallery-img" onclick="openLightbox(this.src)">
+                                    </div>
+                                </div>
+                                <div class="portfolio-right">
+                                    <span class="project-year">2023 - 2025</span>
+                                    <h3 class="project-title-text">多元场景艺术跨界合作项目（文轩 / 市集 / 露营 / 社区）</h3>
+                                    <div class="project-skills-list">
+                                        <span>跨界资源整合</span>
+                                        <span>活动策划</span>
+                                        <span>场景营销</span>
+                                        <span>项目落地</span>
+                                    </div>
+                                    <p class="project-description-text">
+                                        主导品牌在多元线下空间（新华文轩、创意市集、营地、社区）的跨界项目落地。负责从商务对接、方案编制到现场搭建的全周期管理。策划并实施手工互动装置、公益艺术课等内容，实现非传统渠道的人群触达。通过轻量化项目操盘，完成了线下流量向获客转化的路径尝试。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 项目 3 （艺术留学知识库与案例中心） -->
+                            <div class="project-slide" id="project-slide-2">
+                                <div class="portfolio-left">
+                                    <div class="project-gallery">
+                                        <img src="images/project3-1.jpg" alt="案例中心01" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project3-2.jpg" alt="案例中心02" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project3-3.jpg" alt="案例中心03" class="gallery-img" onclick="openLightbox(this.src)">
+                                    </div>
+                                </div>
+                                <div class="portfolio-right">
+                                    <span class="project-year">2018 - 2026</span>
+                                    <h3 class="project-title-text">艺术留学知识库与案例中心</h3>
+                                    <div class="project-skills-list">
+                                        <span>信息检索与分类</span>
+                                        <span>数据处理 (Excel/Notion)</span>
+                                        <span>行业调研</span>
+                                        <span>流程管理</span>
+                                    </div>
+                                    <p class="project-description-text">
+                                        独立搭建覆盖全球艺术院校、专业设置、录取要求、就业方向四维度的底层数据库。将研究生申请全流程拆解为标准化作业规范（SOP）。系统化归纳跨专业申请策略、文书准备要点、风险预警及往届真实案例，形成可检索的案例库，用于支撑团队提升咨询准确度与服务交付的一致性。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 项目 4 （新媒体多平台内容矩阵运营与转化） -->
+                            <div class="project-slide" id="project-slide-3">
+                                <div class="portfolio-left">
+                                    <div class="project-gallery">
+                                        <img src="images/project4-1.jpg" alt="矩阵运营01" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project4-2.jpg" alt="矩阵运营02" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project4-3.jpg" alt="矩阵运营03" class="gallery-img" onclick="openLightbox(this.src)">
+                                    </div>
+                                </div>
+                                <div class="portfolio-right">
+                                    <span class="project-year">2021 - 2024</span>
+                                    <h3 class="project-title-text">新媒体多平台内容矩阵运营与转化</h3>
+                                    <div class="project-skills-list">
+                                        <span>小红书账号运营</span>
+                                        <span>短视频剪辑</span>
+                                        <span>内容策划营销</span>
+                                    </div>
+                                    <p class="project-description-text">
+                                        负责“iart 手工”垂直号的账号搭建与运营，执行选题策划、拍摄、剪辑及排版全流程。3个月内获取 2000+ 精准手工爱好者粉丝。通过内容运营引导粉丝向线下门店转化，直接带动手工体验课程及物料产品的销售增长。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 项目 5 （晶融汇高端商业空间艺术跨界系列活动） -->
+                            <div class="project-slide" id="project-slide-4">
+                                <div class="portfolio-left">
+                                    <div class="project-gallery">
+                                        <img src="images/project5-1.jpg" alt="商业跨界01" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project5-2.jpg" alt="商业跨界02" class="gallery-img" onclick="openLightbox(this.src)">
+                                        <img src="images/project5-3.jpg" alt="商业跨界03" class="gallery-img" onclick="openLightbox(this.src)">
+                                    </div>
+                                </div>
+                                <div class="portfolio-right">
+                                    <span class="project-year">2018</span>
+                                    <h3 class="project-title-text">晶融汇高端商业空间艺术跨界系列活动</h3>
+                                    <div class="project-skills-list">
+                                        <span>跨机构资源协调</span>
+                                        <span>活动统筹</span>
+                                        <span>视觉制作</span>
+                                        <span>品牌公关对接</span>
+                                    </div>
+                                    <p class="project-description-text">
+                                        负责成都晶融汇商圈内伦敦艺术大学（UAL）服装秀、招生展示及唐卡画廊联展的落地执行。统筹商场物业、参展方、校方等多方对接，管控活动各节点进度。独立制作现场视觉汇报及宣传物料，负责现场动线管理与执行支持，确保大型商业空间项目从策划到呈现的闭环落地。
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- 右侧垂直白色小球指示器（Pagination） -->
+                        <div class="portfolio-pagination">
+                            <span class="pagination-dot active" onclick="switchProject(0)"></span>
+                            <span class="pagination-dot" onclick="switchProject(1)"></span>
+                            <span class="pagination-dot" onclick="switchProject(2)"></span>
+                            <span class="pagination-dot" onclick="switchProject(3)"></span>
+                            <span class="pagination-dot" onclick="switchProject(4)"></span>
+                        </div>
+
+                    </div> <!-- /portfolio-card -->
+                </div>
+            </div>
+
+            <!-- [联系我 Panel] -->
+            <div class="page-panel" id="panel-contact">
+                <div class="subpage-content">
+                    <h2 class="subpage-title">联系我</h2>
+                    <div class="contact-details">
+                        <p>如果您对我的履历感兴趣，或者有合作想法，欢迎随时沟通：</p>
+                        <p style="margin-top: 20px;">Email: <a href="mailto:brenda06039@foxmail.com">brenda06039@foxmail.com</a></p>
+                        <p>WeChat: <strong>brenda1222</strong></p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== Lightbox 灯箱放大模态框结构 ==================== -->
+    <div id="lightbox-modal" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="" alt="放大后的设计大图">
+    </div>
+
+    <!-- ==================== 8. 交互控制 JavaScript 脚本 ==================== -->
+    <script>
+        // ----------------- A. 实时电子时钟模块 -----------------
+        function updateClock() {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            
+            const hh = pad(now.getHours());
+            const mm = pad(now.getMinutes());
+            const ss = pad(now.getSeconds());
+
+            const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+            const dayName = days[now.getDay()];
+
+            const dd = pad(now.getDate());
+            const mMonth = pad(now.getMonth() + 1);
+            const yyyy = now.getFullYear();
+
+            document.getElementById('clock-time').textContent = `${hh}:${mm}:${ss}`;
+            document.getElementById('clock-day').textContent = dayName;
+            document.getElementById('clock-date').textContent = `${dd}.${mMonth}.${yyyy}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ----------------- B. 动态渐变双光晕模块 -----------------
+        const colorSchemes = [
+            { start: '#ffb3ba', end: '#ffdfba' },
+            { start: '#baffc9', end: '#bae1ff' },
+            { start: '#e8dbfc', end: '#f8dbfc' },
+            { start: '#ffe5ec', end: '#ffc2d1' },
+            { start: '#d8f3dc', end: '#b7e4c7' },
+            { start: '#f0ebd8', end: '#e2daeb' }
+        ];
+        let currentColorIndex = 0;
+
+        function changeGlowColor() {
+            currentColorIndex = (currentColorIndex + 1) % colorSchemes.length;
+            const nextScheme = colorSchemes[currentColorIndex];
+            const glowEl = document.getElementById('glow-bg');
+            
+            glowEl.style.setProperty('--color-large', nextScheme.start);
+            glowEl.style.setProperty('--color-small', nextScheme.end);
+        }
+
+        let autoColorTimer = setInterval(changeGlowColor, 60000);
+
+        // ----------------- C. 左侧栏刷新 & 性能检测模拟 -----------------
+        const refreshBtn = document.getElementById('refresh-btn');
+        const perfIndicator = document.getElementById('perf-indicator');
+
+        refreshBtn.addEventListener('click', () => {
+            changeGlowColor();
+            clearInterval(autoColorTimer);
+            autoColorTimer = setInterval(changeGlowColor, 60000);
+
+            perfIndicator.classList.add('show');
+            const randomPing = Math.floor(Math.random() * 6) + 10;
+            perfIndicator.textContent = `FPS: 60 | Latency: ${randomPing}ms | Stable`;
+
+            setTimeout(() => {
+                perfIndicator.classList.remove('show');
+            }, 1500);
+        });
+
+        // ----------------- D. 视图无缝切换逻辑 -----------------
+        function navigateTo(targetPageId) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            const targetNavIndex = {
+                'hero': 0, 'about': 1, 'experience': 2, 'portfolio': 3, 'contact': 4
+            }[targetPageId];
+            navItems[targetNavIndex].classList.add('active');
+
+            const panels = document.querySelectorAll('.page-panel');
+            panels.forEach(panel => panel.classList.remove('active'));
+            document.getElementById(`panel-${targetPageId}`).classList.add('active');
+
+            const glowBg = document.getElementById('glow-bg');
+            const backBtn = document.getElementById('back-btn');
+
+            if (targetPageId === 'hero') {
+                glowBg.style.opacity = '1.0';  
+                glowBg.style.transform = 'translate(-50%, -50%) scale(1.15)'; 
+                backBtn.classList.remove('show'); 
+            } else if (targetPageId === 'experience') {
+                glowBg.style.opacity = '0.82'; 
+                glowBg.style.transform = 'translate(-50%, -50%) scale(1.0)';  
+                backBtn.classList.add('show');    
+            } else {
+                glowBg.style.opacity = '0';
+                backBtn.classList.add('show');    
+            }
+        }
+
+        function portfolioRedirect() {
+            navigateTo('portfolio');
+        }
+
+        // 公司经历卡片切换
+        function switchCompany(index) {
+            const tabs = document.querySelectorAll('.company-tab');
+            tabs.forEach((tab, i) => {
+                if (i === index) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            const panels = document.querySelectorAll('.exp-detail-panel');
+            panels.forEach((panel, i) => {
+                if (i === index) {
+                    panel.classList.add('active');
+                    document.querySelector('.exp-details-viewport').scrollTop = 0;
+                } else {
+                    panel.classList.remove('active');
+                }
+            });
+        }
+
+        // 高光项目幻灯片切换
+        function switchProject(projectIndex) {
+            const dots = document.querySelectorAll('.pagination-dot');
+            dots.forEach((dot, idx) => {
+                if (idx === projectIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+
+            const slides = document.querySelectorAll('.project-slide');
+            slides.forEach((slide, idx) => {
+                if (idx === projectIndex) {
+                    slide.classList.add('active');
+                    const gallery = slide.querySelector('.project-gallery');
+                    if (gallery) {
+                        gallery.scrollTop = 0;
+                    }
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+        }
+
+        // Lightbox 灯箱放大逻辑
+        function openLightbox(imageSrc) {
+            const modal = document.getElementById('lightbox-modal');
+            const lightboxImg = document.getElementById('lightbox-img');
+            
+            lightboxImg.src = imageSrc;         
+            modal.classList.add('show');       
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightbox-modal');
+            modal.classList.remove('show');    
+        }
+    </script>
+</body>
+</html>
