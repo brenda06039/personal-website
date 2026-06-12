@@ -39,14 +39,14 @@
             text-decoration: none;
         }
 
-        /* ==================== 【最新修改 1】彻底打入最底层的 Fixed 光晕（物理穿透） ==================== */
+        /* 背景渐变双光晕（大、小两颗球，移至 body 最底层，物理上永不阻挡点击，z-index:-1） */
         .glow-wrapper {
             position: fixed; /* 采用 fixed 全局锁定 */
             width: 420px;
             height: 320px;
             left: 38%; /* 整体向左置偏 */
             top: 50%;
-            transform: translate(-50%, -50%) scale(1.15); /* 初始主页状态放大 1.15 倍 */
+            transform: translate(-50%, -50%) scale(1.15); /* 初始主页状态自动放大 1.15 倍 */
             filter: blur(75px);
             opacity: 1.0; 
             transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -286,7 +286,7 @@
             z-index: 2;
         }
 
-        /* ==================== 【最新修改 3】面板基础物理可见性安全锁（防残留遮挡） ==================== */
+        /* 面板基础物理可见性安全锁（防残留遮挡） */
         .page-panel {
             position: absolute;
             width: 100%;
@@ -446,7 +446,7 @@
             flex-shrink: 0;
         }
 
-        /* ==================== 【最新修改 2】职业经历：Flex 两端对齐，为小箭头的滑出提供空间 ==================== */
+        /* 职业经历：Flex 两端对齐，为小箭头的滑出提供空间 */
         .company-tab {
             display: flex;
             align-items: center;
@@ -821,6 +821,8 @@
                 position: static;
                 opacity: 1;
                 pointer-events: auto;
+                /* ==================== 【最新修改 4】自适应重置，解决手机隐形 Bug ==================== */
+                visibility: visible; /* 手机堆叠平铺状态下，必须重置为 visible 否则全部隐形 */ [1]
                 transform: none;
                 margin-bottom: 60px;
                 height: auto;
@@ -1065,15 +1067,15 @@
                 <div class="subpage-content">
                     <h2 class="subpage-title">职业经历</h2>
                     <div class="exp-interactive-container">
-                        <!-- ==================== 【最新修改 2】添加语义化的 data-index 属性 ==================== -->
+                        <!-- 添加 data-index 属性用于事件绑定 -->
                         <div class="exp-companies-menu">
                             <div class="company-tab active" data-index="0">
                                 成都英曼吉科技文化有限公司
-                                <span class="tab-arrow">→</span> <!-- 动态滑出小箭头 -->
+                                <span class="tab-arrow">→</span>
                             </div>
                             <div class="company-tab" data-index="1">
                                 电子科大科园股份有限公司
-                                <span class="tab-arrow">→</span> <!-- 动态滑出小箭头 -->
+                                <span class="tab-arrow">→</span>
                             </div>
                         </div>
 
@@ -1431,6 +1433,7 @@
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => item.classList.remove('active'));
 
+            // 查找激活的导航索引
             const targetNavIndex = {
                 'hero': 0, 'about': 1, 'experience': 2, 'portfolio': 3, 'contact': 4
             }[targetPageId];
